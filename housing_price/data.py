@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -10,7 +11,19 @@ def load_data(path=config.RAW_DATA):
     path = Path(path)
     if not path.exists():
         _download_dataset(path)
-    return pd.read_csv(path)
+    return _normalize_dtypes(pd.read_csv(path))
+
+
+def _normalize_dtypes(df):
+    # pandas 3.x reads text columns as pyarrow-backed strings, which downstream
+    # dtype checks and imputers treat differently. Coerce non-numeric columns to
+    # plain object with np.nan for missing, so behaviour matches every pandas
+    # version.
+    for col in df.columns:
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            mask = df[col].notna()
+            df[col] = df[col].astype(object).where(mask, np.nan)
+    return df
 
 
 def _download_dataset(path):

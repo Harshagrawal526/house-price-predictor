@@ -28,6 +28,8 @@ def build_preprocessor():
     return ColumnTransformer(
         transformers=[
             ("numeric", numeric, make_column_selector(dtype_include="number")),
-            ("categorical", categorical, make_column_selector(dtype_include=object)),
+            # dtype_exclude="number" catches every non-numeric column regardless
+            # of whether strings are numpy-object or pyarrow-backed (pandas 3.x)
+            ("categorical", categorical, make_column_selector(dtype_exclude="number")),
         ]
     )

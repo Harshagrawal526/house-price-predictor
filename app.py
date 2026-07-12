@@ -20,10 +20,10 @@ def get_baseline():
     X, _ = split_features_target(load_data())
     baseline = {}
     for col in X.columns:
-        if X[col].dtype == object:
-            baseline[col] = X[col].mode()[0]
-        else:
+        if pd.api.types.is_numeric_dtype(X[col]):
             baseline[col] = X[col].median()
+        else:
+            baseline[col] = X[col].mode()[0]
     return X, baseline
 
 
