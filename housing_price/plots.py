@@ -1,17 +1,6 @@
-"""Visualisation helpers.
-
-Each function saves one figure into ``reports/figures`` and returns its path.
-All plotting uses a non-interactive backend so the pipeline runs head-less
-(e.g. in CI) without popping up windows.
-"""
-
-from __future__ import annotations
-
-from pathlib import Path
-
 import matplotlib
 
-matplotlib.use("Agg")  # head-less backend; must be set before pyplot import
+matplotlib.use("Agg")  # must be set before importing pyplot
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -22,7 +11,7 @@ from . import config
 sns.set_theme(style="whitegrid")
 
 
-def _save(fig, name: str) -> Path:
+def _save(fig, name):
     config.FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     path = config.FIGURES_DIR / name
     fig.savefig(path, dpi=120, bbox_inches="tight")
@@ -30,8 +19,7 @@ def _save(fig, name: str) -> Path:
     return path
 
 
-def _rupees(x, _pos=None) -> str:
-    """Format a rupee amount compactly (e.g. 4.2M)."""
+def _rupees(x, _pos=None):
     if abs(x) >= 1e6:
         return f"₹{x / 1e6:.1f}M"
     if abs(x) >= 1e3:
@@ -39,7 +27,7 @@ def _rupees(x, _pos=None) -> str:
     return f"₹{x:.0f}"
 
 
-def price_distribution(df: pd.DataFrame) -> Path:
+def price_distribution(df):
     fig, ax = plt.subplots(figsize=(9, 5))
     sns.histplot(df[config.TARGET], kde=True, color="#4C72B0", ax=ax)
     ax.set_title("Distribution of Housing Prices")
@@ -48,8 +36,7 @@ def price_distribution(df: pd.DataFrame) -> Path:
     return _save(fig, "housing_price_distribution.png")
 
 
-def correlation_heatmap(df: pd.DataFrame) -> Path:
-    """Correlation heatmap over numeric + one-hot-encoded features."""
+def correlation_heatmap(df):
     encoded = pd.get_dummies(df[config.FEATURES], drop_first=True)
     encoded[config.TARGET] = df[config.TARGET].values
     corr = encoded.corr(numeric_only=True)
@@ -59,8 +46,7 @@ def correlation_heatmap(df: pd.DataFrame) -> Path:
     return _save(fig, "correlation_heatmap.png")
 
 
-def model_comparison(results: pd.DataFrame) -> Path:
-    """Side-by-side bars of cross-validated R² and RMSE for every model."""
+def model_comparison(results):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 
     order = results.sort_values("R2", ascending=True)
@@ -79,39 +65,35 @@ def model_comparison(results: pd.DataFrame) -> Path:
     return _save(fig, "model_evaluation_plot.png")
 
 
-def predicted_vs_actual(y_test, y_pred, model_name: str) -> Path:
+def predicted_vs_actual(y_test, y_pred, model_name):
     fig, ax = plt.subplots(figsize=(7, 7))
     ax.scatter(y_test, y_pred, alpha=0.6, color="#4C72B0", edgecolor="white")
     lims = [min(y_test.min(), y_pred.min()), max(y_test.max(), y_pred.max())]
     ax.plot(lims, lims, "--", color="grey", label="Perfect prediction")
     ax.set_xlabel("Actual price")
     ax.set_ylabel("Predicted price")
-    ax.set_title(f"Predicted vs Actual — {model_name}")
+    ax.set_title(f"Predicted vs Actual - {model_name}")
     ax.xaxis.set_major_formatter(plt.FuncFormatter(_rupees))
     ax.yaxis.set_major_formatter(plt.FuncFormatter(_rupees))
     ax.legend()
     return _save(fig, "predicted_vs_actual.png")
 
 
-def residual_plot(y_test, y_pred, model_name: str) -> Path:
+def residual_plot(y_test, y_pred, model_name):
     residuals = np.asarray(y_test) - np.asarray(y_pred)
     fig, ax = plt.subplots(figsize=(9, 5))
     ax.scatter(y_pred, residuals, alpha=0.6, color="#8172B3", edgecolor="white")
     ax.axhline(0, linestyle="--", color="grey")
     ax.set_xlabel("Predicted price")
     ax.set_ylabel("Residual (actual − predicted)")
-    ax.set_title(f"Residual Plot — {model_name}")
+    ax.set_title(f"Residual Plot - {model_name}")
     ax.xaxis.set_major_formatter(plt.FuncFormatter(_rupees))
     ax.yaxis.set_major_formatter(plt.FuncFormatter(_rupees))
     return _save(fig, "residual_plot.png")
 
 
-def feature_importance(model, model_name: str, top_n: int = 15) -> Path | None:
-    """Plot feature importances / coefficients for the best model, if available.
-
-    Works for tree ensembles (``feature_importances_``) and linear models
-    (``coef_``). Returns ``None`` if the estimator exposes neither.
-    """
+def feature_importance(model, model_name, top_n=15):
+    # handles both tree importances and linear coefficients
     estimator = model.named_steps["model"]
     try:
         names = model.named_steps["preprocess"].get_feature_names_out()
@@ -127,7 +109,7 @@ def feature_importance(model, model_name: str, top_n: int = 15) -> Path | None:
     else:
         return None
 
-    # Polynomial expansion changes the feature count; skip if names don't align.
+    # polynomial models change the feature count, so names won't line up
     if len(values) != len(names):
         return None
 
@@ -139,6 +121,6 @@ def feature_importance(model, model_name: str, top_n: int = 15) -> Path | None:
     )
     fig, ax = plt.subplots(figsize=(9, 6))
     ax.barh(imp.index, imp.values, color="#4C72B0")
-    ax.set_title(f"Top Feature Importances — {model_name}")
+    ax.set_title(f"Top Feature Importances - {model_name}")
     ax.set_xlabel(xlabel)
     return _save(fig, "feature_importance.png")

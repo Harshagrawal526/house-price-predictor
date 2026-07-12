@@ -1,11 +1,4 @@
-"""Lightweight tests that guard the core contracts of the pipeline.
-
-Run with ``pytest``. They train on the real (small) dataset, which keeps them
-fast while still exercising the leak-free preprocessing end-to-end.
-"""
-
 import numpy as np
-import pandas as pd
 
 from housing_price import config
 from housing_price.data import load_data, split_features_target, train_test_data
@@ -21,7 +14,6 @@ def test_data_loads_without_nulls():
 
 
 def test_target_is_not_scaled():
-    """Prices must stay in real rupees, not standardised."""
     df = load_data()
     assert df[config.TARGET].min() > 100_000
 
@@ -30,9 +22,7 @@ def test_models_produce_sensible_scores():
     df = load_data()
     X, y = split_features_target(df)
     results = cross_validate_models(get_models(), X, y)
-    # Every model returns a finite R²; the original degree-2 bug produced -9e21.
     assert np.isfinite(results["R2"]).all()
-    # The best model should explain a decent share of the variance.
     assert results["R2"].max() > 0.5
 
 

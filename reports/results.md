@@ -1,9 +1,9 @@
-# Housing Price Prediction — Results
+# Housing Price Prediction - Results
 
-All models share a leak-free scikit-learn pipeline: preprocessing (scaling + one-hot encoding) is fitted inside each cross-validation fold, and the target `price` is kept in rupees so every error metric is interpretable.
+Preprocessing (scaling + one-hot encoding) runs inside each CV fold, and `price` is left in rupees so RMSE and MAE are readable.
 
-- **Dataset:** Housing.csv (545 homes, 12 features)
-- **Validation:** 5-fold cross-validation + a 20% held-out test set
+- Dataset: Housing.csv (545 homes, 12 features)
+- Validation: 5-fold cross-validation + a 20% held-out test set
 
 ## Cross-Validated Model Comparison
 
@@ -35,8 +35,8 @@ Evaluated on the unseen 20% test split:
 ![Price distribution](figures/housing_price_distribution.png)
 ![Correlation heatmap](figures/correlation_heatmap.png)
 
-## Takeaways
+## Notes
 
-- Keeping the target in rupees and fitting preprocessing inside each fold gives honest, directly readable error metrics.
-- Unregularised polynomial regression is numerically unstable on binary dummy features; pairing it with L2 regularisation (Ridge) makes it well-behaved.
-- On this dataset the relationship is largely linear: regularised linear models (Ridge/Lasso) match or slightly beat the tree ensembles, and `area`, `bathrooms` and `airconditioning` are among the most influential features.
+- The relationship here is mostly linear: Ridge/Lasso do about as well as the tree ensembles.
+- `area`, `bathrooms` and `airconditioning` are the strongest features.
+- Plain polynomial regression is unstable on the binary dummies, so the degree-2 model uses Ridge.

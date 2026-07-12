@@ -1,28 +1,13 @@
-"""Feature preprocessing.
-
-The preprocessing lives inside a scikit-learn ``ColumnTransformer`` so that it
-is *fitted only on the training portion of each cross-validation fold*. This
-prevents information from the validation rows leaking into training.
-"""
-
-from __future__ import annotations
-
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from . import config
 
 
-def build_preprocessor() -> ColumnTransformer:
-    """Build the feature preprocessing transformer.
-
-    - Numeric columns are standardised (zero mean, unit variance).
-    - Categorical columns are one-hot encoded; unknown categories seen at
-      prediction time are ignored rather than raising.
-
-    The target (``price``) is intentionally *not* transformed here, so all
-    error metrics stay in real rupees and remain interpretable.
-    """
+def build_preprocessor():
+    # scale numeric features, one-hot encode categoricals. Wrapped in a
+    # ColumnTransformer so it's refit per fold and doesn't leak. The target is
+    # left alone so metrics stay in rupees.
     return ColumnTransformer(
         transformers=[
             ("numeric", StandardScaler(), config.NUMERIC_FEATURES),

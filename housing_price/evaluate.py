@@ -1,7 +1,3 @@
-"""Cross-validation and hold-out evaluation with interpretable metrics."""
-
-from __future__ import annotations
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -9,8 +5,7 @@ from sklearn.model_selection import KFold, cross_validate
 
 from . import config
 
-# Scikit-learn scorers report "higher is better", so error metrics come back
-# negated. We flip them back when summarising.
+# sklearn returns error metrics negated ("higher is better"), so we flip them below
 _SCORING = {
     "r2": "r2",
     "rmse": "neg_root_mean_squared_error",
@@ -18,12 +13,7 @@ _SCORING = {
 }
 
 
-def cross_validate_models(models: dict, X, y) -> pd.DataFrame:
-    """Run k-fold cross-validation for every model and summarise the scores.
-
-    Returns a dataframe sorted by descending R², with mean and standard
-    deviation for R², RMSE (₹) and MAE (₹).
-    """
+def cross_validate_models(models, X, y):
     cv = KFold(n_splits=config.CV_FOLDS, shuffle=True, random_state=config.RANDOM_STATE)
     rows = []
     for name, model in models.items():
@@ -39,15 +29,10 @@ def cross_validate_models(models: dict, X, y) -> pd.DataFrame:
                 "MAE_std": scores["test_mae"].std(),
             }
         )
-    return (
-        pd.DataFrame(rows)
-        .sort_values("R2", ascending=False)
-        .reset_index(drop=True)
-    )
+    return pd.DataFrame(rows).sort_values("R2", ascending=False).reset_index(drop=True)
 
 
-def evaluate_on_test(model, X_train, y_train, X_test, y_test) -> dict:
-    """Fit on the training split and score on the held-out test split."""
+def evaluate_on_test(model, X_train, y_train, X_test, y_test):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     return {
