@@ -1,73 +1,120 @@
-# Housing Price Prediction Project
+# 🏠 Housing Price Prediction
 
-## Project Overview
-This project aims to predict housing prices using a dataset that includes various features related to housing conditions. The project utilizes polynomial regression for model fitting and evaluation, as well as feature selection and extraction techniques.
+Predicting house prices from their physical attributes and amenities, using a
+clean, reproducible, **leak-free** machine-learning pipeline.
 
-## Dataset
-The dataset used for this project is the Housing dataset obtained from Kaggle. You can find it [here](https://www.kaggle.com/datasets/ashydv/housing-dataset).
+<p>
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.9%2B-blue">
+  <img alt="scikit-learn" src="https://img.shields.io/badge/scikit--learn-1.3%2B-orange">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
+</p>
 
-## Project Structure
-```
-housing_price_prediction_project/
-│
-├── data/
-│   ├── Feature_Selected_Housing.csv    # Dataset after feature selection
-│   ├── Housing.csv                      # Raw dataset
-│   ├── Model_Evaluation_Results.csv     # Results of model evaluation
-│   └── Preprocessed_Housing.csv         # Preprocessed dataset
-│
-├── README.md                            # Documentation for the project
-│
-├── reports/                             # Directory for report files
-│   ├── figures/                         # Directory to store visualizations
-│   │   ├── correlation_heatmap.png      # Correlation heatmap plot
-│   │   ├── correlation_matrix.png        # Correlation matrix plot
-│   │   ├── housing_price_distribution.png # Distribution plot of housing prices
-│   │   ├── model_evaluation_plot.png    # Model evaluation plot
-│   │   └── residual_plot.png             # Residual plot
-│   └── results.md                       # Results and findings of the project
-│
-├── requirements.txt                     # Required packages for the project
-│
-└── src/                                 # Source code for the project
-    ├── __init__.py                      # Initialization for the package
-    ├── data_loading.py                  # Data loading functionality
-    ├── data_exploration.py               # Data exploration and initial analysis
-    ├── feature_selection.py              # Feature selection techniques
-    ├── preprocessing.py                  # Data preprocessing techniques
-    ├── model.py                          # Model training and evaluation logic
-    └── report.py                        # Generates reports based on analysis
-```
-## Installation
-To set up the project environment, follow these steps:
+---
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Harshagrawal526/housing_price_prediction_project.git
-   cd housing_price_prediction_project
-   ```
+## Overview
 
-2. Install the required Python packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+Given 545 houses described by 12 features (area, bedrooms, bathrooms, stories,
+parking, and amenities such as air-conditioning, a basement, or a preferred
+location), the goal is to predict the sale **price**.
 
+The project compares six regression models under identical, honest conditions
+and reports every error metric **in real rupees** so the results are actually
+interpretable.
 
-## Usage
-1. Load the data using `data_loading.py`.
-2. Explore the data with `data_exploration.py`.
-3. Perform feature selection with `feature_selection.py`.
-4. Preprocess the data with `preprocessing.py`.
-5. Evaluate models and visualize results using `model.py` and `visualizations.py`.
+> **Dataset:** [Kaggle Housing dataset](https://www.kaggle.com/datasets/ashydv/housing-dataset)
 
 ## Results
-The results of the project can be found in the `reports/results.md` file. Key findings include:
-- Selected features for model training.
-- Performance metrics of polynomial regression models.
-- Visualizations of the correlation matrix, model evaluation, and residual plots.
 
-## Conclusion
-This project demonstrates the application of machine learning techniques in predicting housing prices. The methodologies applied include data exploration, feature selection, polynomial regression, and visualization of results.
+Five-fold cross-validation across all candidate models:
+
+| Model | R² | RMSE (₹) | MAE (₹) |
+|-------|-----|----------|---------|
+| **Ridge Regression** ⭐ | **0.633** | 1,083,790 | 805,794 |
+| Lasso Regression | 0.633 | 1,084,287 | 806,463 |
+| Linear Regression | 0.632 | 1,084,538 | 807,180 |
+| Random Forest | 0.621 | 1,108,356 | 804,469 |
+| Gradient Boosting | 0.612 | 1,117,763 | 804,724 |
+| Polynomial (deg 2) + Ridge | 0.612 | 1,109,692 | 814,444 |
+
+On the held-out 20% test set, the best model (**Ridge**) scores **R² = 0.65**,
+**RMSE ≈ ₹1.33M**, **MAE ≈ ₹0.97M**.
+
+**Key finding:** the price relationship on this dataset is largely *linear* —
+regularised linear models match or slightly beat the tree ensembles, and
+`area`, `bathrooms`, and `airconditioning` are the most influential features.
+
+<p>
+  <img src="reports/figures/model_evaluation_plot.png" width="49%">
+  <img src="reports/figures/predicted_vs_actual.png" width="49%">
+</p>
+
+See [`reports/results.md`](reports/results.md) for the full write-up and every
+figure.
+
+## What makes this pipeline correct
+
+This is a rebuild of an earlier coursework version, with the machine-learning
+methodology fixed:
+
+| Issue in the original | Fix here |
+|-----------------------|----------|
+| Preprocessing was fitted on the **whole dataset** before cross-validation → **data leakage** | Preprocessing lives inside a scikit-learn `Pipeline`, refitted **within each CV fold** |
+| The **target was scaled**, making all metrics unitless & meaningless | `price` is kept in rupees → RMSE/MAE are directly interpretable |
+| Degree-2 polynomial regression **exploded** (R² ≈ −9×10²¹) | Polynomial features are paired with **L2 regularisation (Ridge)**, which stays stable |
+| Disconnected scripts with hardcoded paths, no entry point | One importable package + a single `python main.py` entry point |
+| `requirements.txt` was a full `pip freeze` of the machine (232 packages) | Trimmed to the handful of real dependencies |
+
+## Project structure
+
+```
+housing_price_prediction_project/
+├── housing_price/            # the package
+│   ├── config.py             # paths, column groups, constants
+│   ├── data.py               # loading & train/test splitting
+│   ├── features.py           # leak-free ColumnTransformer (scale + one-hot)
+│   ├── models.py             # six model pipelines
+│   ├── evaluate.py           # cross-validation & hold-out metrics
+│   ├── plots.py              # all visualisations
+│   └── pipeline.py           # end-to-end orchestration
+├── data/
+│   ├── Housing.csv           # raw dataset
+│   └── Model_Evaluation_Results.csv   # generated
+├── reports/
+│   ├── figures/              # generated plots
+│   └── results.md            # generated report
+├── tests/                    # pytest suite
+├── main.py                   # run everything
+└── requirements.txt
+```
+
+## Quick start
+
+```bash
+# 1. Install dependencies (a virtual environment is recommended)
+pip install -r requirements.txt
+
+# 2. Run the full pipeline: load → explore → cross-validate → evaluate → report
+python main.py
+
+# 3. (optional) run the tests
+pytest
+```
+
+Running `main.py` prints the model comparison to the console and regenerates
+everything under `data/` and `reports/`.
+
+## How it works
+
+1. **Load** the raw CSV (`data.py`).
+2. **Explore** — price distribution and a correlation heatmap (`plots.py`).
+3. **Preprocess** inside each fold — standard-scale numeric features, one-hot
+   encode categoricals (`features.py`).
+4. **Cross-validate** six models with 5-fold CV, scoring R², RMSE and MAE
+   (`evaluate.py`).
+5. **Evaluate** the winner on a held-out 20% test set.
+6. **Report** — save figures, a results CSV, and a markdown summary
+   (`pipeline.py`).
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Released under the [MIT License](LICENSE).
