@@ -68,12 +68,11 @@ def _write_results(cv_results: pd.DataFrame, best_name: str, test_metrics: dict)
         "",
         "## Takeaways",
         "",
-        "- Fixing data leakage and keeping the target in rupees gives honest, "
-        "readable numbers instead of the original project's scaled, "
-        "uninterpretable scores.",
+        "- Keeping the target in rupees and fitting preprocessing inside each "
+        "fold gives honest, directly readable error metrics.",
         "- Unregularised polynomial regression is numerically unstable on binary "
-        "dummy features (the original degree-2 model produced R² ≈ -9e21); "
-        "adding L2 regularisation (Ridge) makes it well-behaved.",
+        "dummy features; pairing it with L2 regularisation (Ridge) makes it "
+        "well-behaved.",
         "- On this dataset the relationship is largely linear: regularised "
         "linear models (Ridge/Lasso) match or slightly beat the tree ensembles, "
         "and `area`, `bathrooms` and `airconditioning` are among the most "

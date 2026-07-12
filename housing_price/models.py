@@ -35,10 +35,9 @@ def get_models() -> dict[str, Pipeline]:
 
     - **Linear Regression** — the baseline.
     - **Ridge / Lasso** — regularised linear models.
-    - **Polynomial (deg 2) + Ridge** — the original project's degree-2 model
-      exploded (R² ≈ -9e21) because unregularised polynomial features on binary
-      dummies are wildly unstable. Adding L2 regularisation tames it, showing
-      *why* the original blew up rather than just discarding the idea.
+    - **Polynomial (deg 2) + Ridge** — unregularised polynomial features on
+      binary dummies are numerically unstable, so the degree-2 term is paired
+      with L2 regularisation to keep it well-behaved.
     - **Random Forest / Gradient Boosting** — non-linear ensembles that usually
       win on tabular data like this.
     """

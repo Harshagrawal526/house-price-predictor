@@ -51,18 +51,20 @@ regularised linear models match or slightly beat the tree ensembles, and
 See [`reports/results.md`](reports/results.md) for the full write-up and every
 figure.
 
-## What makes this pipeline correct
+## Design decisions
 
-This is a rebuild of an earlier coursework version, with the machine-learning
-methodology fixed:
+A few choices that keep the results trustworthy:
 
-| Issue in the original | Fix here |
-|-----------------------|----------|
-| Preprocessing was fitted on the **whole dataset** before cross-validation → **data leakage** | Preprocessing lives inside a scikit-learn `Pipeline`, refitted **within each CV fold** |
-| The **target was scaled**, making all metrics unitless & meaningless | `price` is kept in rupees → RMSE/MAE are directly interpretable |
-| Degree-2 polynomial regression **exploded** (R² ≈ −9×10²¹) | Polynomial features are paired with **L2 regularisation (Ridge)**, which stays stable |
-| Disconnected scripts with hardcoded paths, no entry point | One importable package + a single `python main.py` entry point |
-| `requirements.txt` was a full `pip freeze` of the machine (232 packages) | Trimmed to the handful of real dependencies |
+- **No data leakage.** All preprocessing lives inside a scikit-learn `Pipeline`,
+  so scaling and encoding are refitted **within each cross-validation fold** —
+  the model never sees the validation rows during fitting.
+- **Interpretable metrics.** The target `price` is kept in rupees rather than
+  scaled, so RMSE and MAE are directly meaningful amounts.
+- **Stable regularisation.** Polynomial features are paired with L2
+  regularisation (Ridge); unregularised high-degree polynomials on binary dummy
+  features are numerically unstable.
+- **Reproducible.** A fixed random seed and a single `python main.py` entry
+  point regenerate every result, figure, and report.
 
 ## Project structure
 

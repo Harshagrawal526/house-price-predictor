@@ -1,9 +1,8 @@
 """Feature preprocessing.
 
 The preprocessing lives inside a scikit-learn ``ColumnTransformer`` so that it
-is *fitted only on the training portion of each cross-validation fold*. This is
-the key fix over the original project, which scaled the whole dataset up front
-and leaked information from the test rows into training.
+is *fitted only on the training portion of each cross-validation fold*. This
+prevents information from the validation rows leaking into training.
 """
 
 from __future__ import annotations
@@ -21,7 +20,7 @@ def build_preprocessor() -> ColumnTransformer:
     - Categorical columns are one-hot encoded; unknown categories seen at
       prediction time are ignored rather than raising.
 
-    Note the target (``price``) is intentionally *not* transformed here, so all
+    The target (``price``) is intentionally *not* transformed here, so all
     error metrics stay in real rupees and remain interpretable.
     """
     return ColumnTransformer(
