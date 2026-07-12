@@ -2,22 +2,21 @@ import joblib
 
 from . import config
 from .data import load_data, split_features_target
-from .evaluate import cross_validate_models
 from .models import get_models
 
 
-def train_and_save(path=config.MODEL_PATH):
-    # pick the best model by CV, then refit it on the whole dataset and save
+def train_and_save(path=config.MODEL_PATH, name=config.DEFAULT_MODEL):
+    # fit the production model on the whole dataset and save it. No CV here —
+    # the model comparison lives in the pipeline; the app just needs a fitted
+    # model, so this stays fast enough to run on a cold start.
     df = load_data()
     X, y = split_features_target(df)
-    results = cross_validate_models(get_models(), X, y)
-    best_name = results.iloc[0]["Model"]
 
-    model = get_models()[best_name]
+    model = get_models()[name]
     model.fit(X, y)
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump({"model": model, "name": best_name}, path)
+    joblib.dump({"model": model, "name": name}, path)
     return path
 
 

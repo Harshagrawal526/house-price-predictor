@@ -22,3 +22,6 @@ CURRENCY = "$"
 RANDOM_STATE = 42
 TEST_SIZE = 0.20
 CV_FOLDS = 5
+
+# the model served by the app — the one that wins the cross-validation below
+DEFAULT_MODEL = "Random Forest"
