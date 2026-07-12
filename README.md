@@ -4,14 +4,15 @@ Predicting house prices from their physical attributes and amenities, using a
 clean, reproducible, **leak-free** machine-learning pipeline.
 
 <p>
-  <img alt="CI" src="https://github.com/Harshagrawal526/housing_price_prediction_project/actions/workflows/ci.yml/badge.svg">
+  <img alt="CI" src="https://github.com/Harshagrawal526/house-price-predictor/actions/workflows/ci.yml/badge.svg">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.9%2B-blue">
   <img alt="scikit-learn" src="https://img.shields.io/badge/scikit--learn-1.3%2B-orange">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
-**Try it live:** an interactive Streamlit app takes a house's details and
-predicts its price — run `streamlit run app.py` (see [Demo](#demo) below).
+### ▶️ [Try the live demo](https://house-price-predictor-ha.streamlit.app/)
+
+An interactive Streamlit app takes a house's details and predicts its price.
 
 ---
 
@@ -87,7 +88,7 @@ A few choices that keep the results trustworthy:
 ## Project structure
 
 ```
-housing_price_prediction_project/
+house-price-predictor/
 ├── housing_price/            # the package
 │   ├── config.py             # paths, column groups, constants
 │   ├── data.py               # loading & train/test splitting
