@@ -28,6 +28,25 @@ interpretable.
 
 > **Dataset:** [Kaggle Housing dataset](https://www.kaggle.com/datasets/ashydv/housing-dataset)
 
+## Quick start
+
+```bash
+# 1. Install dependencies (a virtual environment is recommended)
+pip install -r requirements.txt
+
+# 2. Run the full pipeline: train, evaluate, generate figures + the saved model
+python main.py
+
+# 3. Launch the interactive demo
+streamlit run app.py
+
+# 4. (optional) run the tests
+pytest
+```
+
+Running `main.py` prints the model comparison to the console and regenerates
+everything under `data/`, `reports/`, and the saved model in `models/`.
+
 ## Results
 
 Five-fold cross-validation across all candidate models:
@@ -58,32 +77,26 @@ figure.
 
 ## Demo
 
-An interactive [Streamlit](https://streamlit.io) app wraps the trained model:
-fill in a house's attributes and get an instant price estimate.
+A [Streamlit](https://streamlit.io) app wraps the trained model: fill in a
+house's attributes and get an instant price estimate.
+
+**[▶️ Live app](https://house-price-predictor-ha.streamlit.app/)** — or run it locally:
 
 ```bash
 streamlit run app.py
 ```
 
 The app loads the saved model from `models/`, training it on first launch if it
-isn't there yet. To deploy it for free, push this repo to GitHub and point
-[Streamlit Community Cloud](https://streamlit.io/cloud) at `app.py` — then drop
-the live URL here.
+isn't there yet. It's deployed for free on Streamlit Community Cloud.
 
 ## Design decisions
 
-A few choices that keep the results trustworthy:
-
-- **No data leakage.** All preprocessing lives inside a scikit-learn `Pipeline`,
-  so scaling and encoding are refitted **within each cross-validation fold** —
-  the model never sees the validation rows during fitting.
-- **Interpretable metrics.** The target `price` is kept in rupees rather than
-  scaled, so RMSE and MAE are directly meaningful amounts.
-- **Stable regularisation.** Polynomial features are paired with L2
-  regularisation (Ridge); unregularised high-degree polynomials on binary dummy
-  features are numerically unstable.
-- **Reproducible.** A fixed random seed and a single `python main.py` entry
-  point regenerate every result, figure, and report.
+- **No data leakage** — preprocessing is fit inside each cross-validation fold
+  via a scikit-learn `Pipeline`, never on the full dataset.
+- **Interpretable metrics** — `price` is kept in rupees, so RMSE and MAE are
+  real amounts rather than scaled numbers.
+- **Reproducible** — a fixed seed and a single `python main.py` regenerate every
+  result, figure, and the saved model.
 
 ## Project structure
 
@@ -110,37 +123,6 @@ house-price-predictor/
 ├── main.py                   # run the pipeline
 └── requirements.txt
 ```
-
-## Quick start
-
-```bash
-# 1. Install dependencies (a virtual environment is recommended)
-pip install -r requirements.txt
-
-# 2. Run the full pipeline: train, evaluate, generate figures + the saved model
-python main.py
-
-# 3. Launch the interactive demo
-streamlit run app.py
-
-# 4. (optional) run the tests
-pytest
-```
-
-Running `main.py` prints the model comparison to the console and regenerates
-everything under `data/`, `reports/`, and the saved model in `models/`.
-
-## How it works
-
-1. **Load** the raw CSV (`data.py`).
-2. **Explore** — price distribution and a correlation heatmap (`plots.py`).
-3. **Preprocess** inside each fold — standard-scale numeric features, one-hot
-   encode categoricals (`features.py`).
-4. **Cross-validate** six models with 5-fold CV, scoring R², RMSE and MAE
-   (`evaluate.py`).
-5. **Evaluate** the winner on a held-out 20% test set.
-6. **Report** — save figures, a results CSV, and a markdown summary
-   (`pipeline.py`).
 
 ## License
 
