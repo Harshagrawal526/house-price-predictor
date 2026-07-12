@@ -1,3 +1,5 @@
+import joblib
+
 from . import config, plots
 from .data import load_data, split_features_target, train_test_data
 from .evaluate import cross_validate_models, evaluate_on_test
@@ -99,7 +101,14 @@ def run():
     plots.feature_importance(best_model, best_name)
 
     _write_results(cv_results, best_name, test_metrics)
-    print(f"\nWrote {config.RESULTS_CSV.name} and {config.RESULTS_MD.name}.")
+
+    # refit the winner on all the data and save it for the Streamlit app
+    final_model = get_models()[best_name]
+    final_model.fit(X, y)
+    config.MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump({"model": final_model, "name": best_name}, config.MODEL_PATH)
+
+    print(f"\nWrote {config.RESULTS_CSV.name}, {config.RESULTS_MD.name} and {config.MODEL_PATH.name}.")
 
 
 if __name__ == "__main__":

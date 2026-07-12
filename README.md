@@ -4,10 +4,14 @@ Predicting house prices from their physical attributes and amenities, using a
 clean, reproducible, **leak-free** machine-learning pipeline.
 
 <p>
+  <img alt="CI" src="https://github.com/Harshagrawal526/housing_price_prediction_project/actions/workflows/ci.yml/badge.svg">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.9%2B-blue">
   <img alt="scikit-learn" src="https://img.shields.io/badge/scikit--learn-1.3%2B-orange">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
 </p>
+
+**Try it live:** an interactive Streamlit app takes a house's details and
+predicts its price — run `streamlit run app.py` (see [Demo](#demo) below).
 
 ---
 
@@ -51,6 +55,20 @@ regularised linear models match or slightly beat the tree ensembles, and
 See [`reports/results.md`](reports/results.md) for the full write-up and every
 figure.
 
+## Demo
+
+An interactive [Streamlit](https://streamlit.io) app wraps the trained model:
+fill in a house's attributes and get an instant price estimate.
+
+```bash
+streamlit run app.py
+```
+
+The app loads the saved model from `models/`, training it on first launch if it
+isn't there yet. To deploy it for free, push this repo to GitHub and point
+[Streamlit Community Cloud](https://streamlit.io/cloud) at `app.py` — then drop
+the live URL here.
+
 ## Design decisions
 
 A few choices that keep the results trustworthy:
@@ -77,6 +95,7 @@ housing_price_prediction_project/
 │   ├── models.py             # six model pipelines
 │   ├── evaluate.py           # cross-validation & hold-out metrics
 │   ├── plots.py              # all visualisations
+│   ├── train.py              # fit the best model and save it
 │   └── pipeline.py           # end-to-end orchestration
 ├── data/
 │   ├── Housing.csv           # raw dataset
@@ -85,7 +104,9 @@ housing_price_prediction_project/
 │   ├── figures/              # generated plots
 │   └── results.md            # generated report
 ├── tests/                    # pytest suite
-├── main.py                   # run everything
+├── .github/workflows/ci.yml  # runs the tests on every push
+├── app.py                    # Streamlit demo
+├── main.py                   # run the pipeline
 └── requirements.txt
 ```
 
@@ -95,15 +116,18 @@ housing_price_prediction_project/
 # 1. Install dependencies (a virtual environment is recommended)
 pip install -r requirements.txt
 
-# 2. Run the full pipeline: load → explore → cross-validate → evaluate → report
+# 2. Run the full pipeline: train, evaluate, generate figures + the saved model
 python main.py
 
-# 3. (optional) run the tests
+# 3. Launch the interactive demo
+streamlit run app.py
+
+# 4. (optional) run the tests
 pytest
 ```
 
 Running `main.py` prints the model comparison to the console and regenerates
-everything under `data/` and `reports/`.
+everything under `data/`, `reports/`, and the saved model in `models/`.
 
 ## How it works
 

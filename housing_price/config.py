@@ -10,6 +10,7 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 RAW_DATA = DATA_DIR / "Housing.csv"
 RESULTS_CSV = DATA_DIR / "Model_Evaluation_Results.csv"
 RESULTS_MD = REPORTS_DIR / "results.md"
+MODEL_PATH = PROJECT_ROOT / "models" / "housing_model.pkl"
 
 TARGET = "price"
 
