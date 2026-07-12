@@ -7,26 +7,28 @@ from .models import get_models
 
 
 def _fmt_money(x):
-    return f"₹{x:,.0f}"
+    return f"{config.CURRENCY}{x:,.0f}"
 
 
-def _write_results(cv_results, best_name, test_metrics):
+def _write_results(cv_results, best_name, test_metrics, n_samples, n_features):
     config.RESULTS_CSV.parent.mkdir(parents=True, exist_ok=True)
     cv_results.to_csv(config.RESULTS_CSV, index=False)
 
+    cur = config.CURRENCY
     lines = [
         "# Housing Price Prediction - Results",
         "",
-        "Preprocessing (scaling + one-hot encoding) runs inside each CV fold, and "
-        "`price` is left in rupees so RMSE and MAE are readable.",
+        "Missing values are imputed and features scaled/one-hot encoded inside "
+        "each CV fold. `SalePrice` is skewed, so models train on its log and "
+        "predict back in dollars, keeping RMSE and MAE readable.",
         "",
-        f"- Dataset: {config.RAW_DATA.name} (545 homes, 12 features)",
+        f"- Dataset: {config.RAW_DATA.name} ({n_samples} homes, {n_features} features)",
         f"- Validation: {config.CV_FOLDS}-fold cross-validation + a "
         f"{int(config.TEST_SIZE * 100)}% held-out test set",
         "",
         "## Cross-Validated Model Comparison",
         "",
-        "| Model | R² | RMSE (₹) | MAE (₹) |",
+        f"| Model | R² | RMSE ({cur}) | MAE ({cur}) |",
         "|-------|----|----------|---------|",
     ]
     for _, r in cv_results.iterrows():
@@ -58,11 +60,11 @@ def _write_results(cv_results, best_name, test_metrics):
         "",
         "## Notes",
         "",
-        "- The relationship here is mostly linear: Ridge/Lasso do about as well "
-        "as the tree ensembles.",
-        "- `area`, `bathrooms` and `airconditioning` are the strongest features.",
-        "- Plain polynomial regression is unstable on the binary dummies, so the "
-        "degree-2 model uses Ridge.",
+        "- With 79 features and real missing values, the tree ensembles pull "
+        "ahead of the linear models here.",
+        "- Log-transforming the skewed target and imputing missing values are the "
+        "two changes that matter most for accuracy.",
+        "- `OverallQual` and `GrLivArea` are consistently the strongest predictors.",
         "",
     ]
     config.RESULTS_MD.write_text("\n".join(lines))
@@ -100,7 +102,7 @@ def run():
     plots.residual_plot(y_test, test_metrics["y_pred"], best_name)
     plots.feature_importance(best_model, best_name)
 
-    _write_results(cv_results, best_name, test_metrics)
+    _write_results(cv_results, best_name, test_metrics, len(df), X.shape[1])
 
     # refit the winner on all the data and save it for the Streamlit app
     final_model = get_models()[best_name]

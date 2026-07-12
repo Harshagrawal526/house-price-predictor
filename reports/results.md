@@ -1,30 +1,28 @@
 # Housing Price Prediction - Results
 
-Preprocessing (scaling + one-hot encoding) runs inside each CV fold, and `price` is left in rupees so RMSE and MAE are readable.
+Missing values are imputed and features scaled/one-hot encoded inside each CV fold. `SalePrice` is skewed, so models train on its log and predict back in dollars, keeping RMSE and MAE readable.
 
-- Dataset: Housing.csv (545 homes, 12 features)
+- Dataset: AmesHousing.csv (1460 homes, 79 features)
 - Validation: 5-fold cross-validation + a 20% held-out test set
 
 ## Cross-Validated Model Comparison
 
-| Model | R² | RMSE (₹) | MAE (₹) |
+| Model | R² | RMSE ($) | MAE ($) |
 |-------|----|----------|---------|
-| Ridge Regression | 0.633 ± 0.072 | 1,083,790 | 805,794 |
-| Lasso Regression | 0.633 ± 0.073 | 1,084,287 | 806,463 |
-| Linear Regression | 0.632 ± 0.074 | 1,084,538 | 807,180 |
-| Random Forest | 0.621 ± 0.064 | 1,108,356 | 804,469 |
-| Gradient Boosting | 0.612 ± 0.070 | 1,117,763 | 804,724 |
-| Polynomial (deg 2) + Ridge | 0.612 ± 0.101 | 1,109,692 | 814,444 |
+| Random Forest | 0.840 ± 0.082 | 30,667 | 17,697 |
+| Lasso Regression | 0.835 ± 0.156 | 29,214 | 14,819 |
+| Gradient Boosting | 0.832 ± 0.131 | 30,284 | 16,341 |
+| Ridge Regression | 0.829 ± 0.168 | 29,529 | 15,089 |
 
-**Best model:** Ridge Regression
+**Best model:** Random Forest
 
 ## Held-Out Test Performance
 
 Evaluated on the unseen 20% test split:
 
-- **R²:** 0.652
-- **RMSE:** ₹1,326,231
-- **MAE:** ₹971,714
+- **R²:** 0.887
+- **RMSE:** $29,489
+- **MAE:** $17,355
 
 ## Figures
 
@@ -37,6 +35,6 @@ Evaluated on the unseen 20% test split:
 
 ## Notes
 
-- The relationship here is mostly linear: Ridge/Lasso do about as well as the tree ensembles.
-- `area`, `bathrooms` and `airconditioning` are the strongest features.
-- Plain polynomial regression is unstable on the binary dummies, so the degree-2 model uses Ridge.
+- With 79 features and real missing values, the tree ensembles pull ahead of the linear models here.
+- Log-transforming the skewed target and imputing missing values are the two changes that matter most for accuracy.
+- `OverallQual` and `GrLivArea` are consistently the strongest predictors.

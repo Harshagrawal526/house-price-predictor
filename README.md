@@ -1,7 +1,7 @@
 # 🏠 Housing Price Prediction
 
-Predicting house prices from their physical attributes and amenities, using a
-clean, reproducible, **leak-free** machine-learning pipeline.
+Predicting home sale prices from 79 property features, using a clean,
+reproducible, **leak-free** machine-learning pipeline.
 
 <p>
   <img alt="CI" src="https://github.com/Harshagrawal526/house-price-predictor/actions/workflows/ci.yml/badge.svg">
@@ -18,15 +18,15 @@ An interactive Streamlit app takes a house's details and predicts its price.
 
 ## Overview
 
-Given 545 houses described by 12 features (area, bedrooms, bathrooms, stories,
-parking, and amenities such as air-conditioning, a basement, or a preferred
-location), the goal is to predict the sale **price**.
+The [Ames Housing dataset](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)
+describes 1,460 home sales in Ames, Iowa with **79 features** — lot size, living
+area, quality ratings, year built, neighborhood, garage, basement, and dozens
+more, including real missing values. The goal is to predict the **sale price**.
 
-The project compares six regression models under identical, honest conditions
-and reports every error metric **in real rupees** so the results are actually
-interpretable.
+The project compares four regression models under identical, honest conditions
+and reports every error metric **in dollars** so the results are interpretable.
 
-> **Dataset:** [Kaggle Housing dataset](https://www.kaggle.com/datasets/ashydv/housing-dataset)
+> **Dataset:** [House Prices: Advanced Regression Techniques (Kaggle / Ames, Iowa)](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)
 
 ## Quick start
 
@@ -51,21 +51,21 @@ everything under `data/`, `reports/`, and the saved model in `models/`.
 
 Five-fold cross-validation across all candidate models:
 
-| Model | R² | RMSE (₹) | MAE (₹) |
+| Model | R² | RMSE ($) | MAE ($) |
 |-------|-----|----------|---------|
-| **Ridge Regression** ⭐ | **0.633** | 1,083,790 | 805,794 |
-| Lasso Regression | 0.633 | 1,084,287 | 806,463 |
-| Linear Regression | 0.632 | 1,084,538 | 807,180 |
-| Random Forest | 0.621 | 1,108,356 | 804,469 |
-| Gradient Boosting | 0.612 | 1,117,763 | 804,724 |
-| Polynomial (deg 2) + Ridge | 0.612 | 1,109,692 | 814,444 |
+| **Random Forest** ⭐ | **0.840** | 30,667 | 17,697 |
+| Lasso Regression | 0.835 | 29,214 | 14,819 |
+| Gradient Boosting | 0.832 | 30,284 | 16,341 |
+| Ridge Regression | 0.829 | 29,529 | 15,089 |
 
-On the held-out 20% test set, the best model (**Ridge**) scores **R² = 0.65**,
-**RMSE ≈ ₹1.33M**, **MAE ≈ ₹0.97M**.
+On the held-out 20% test set, the best model (**Random Forest**) scores
+**R² = 0.89**, **RMSE ≈ $29K**, **MAE ≈ $17K**.
 
-**Key finding:** the price relationship on this dataset is largely *linear* —
-regularised linear models match or slightly beat the tree ensembles, and
-`area`, `bathrooms`, and `airconditioning` are the most influential features.
+**Key finding:** the tree ensembles come out on top, but the tuned linear models
+are close behind (and actually have the lowest MAE) — the signal in this data is
+strong enough that model choice matters less than getting the preprocessing
+right. `OverallQual` and `GrLivArea` are consistently the most influential
+features.
 
 <p>
   <img src="reports/figures/model_evaluation_plot.png" width="49%">
@@ -91,10 +91,14 @@ isn't there yet. It's deployed for free on Streamlit Community Cloud.
 
 ## Design decisions
 
-- **No data leakage** — preprocessing is fit inside each cross-validation fold
-  via a scikit-learn `Pipeline`, never on the full dataset.
-- **Interpretable metrics** — `price` is kept in rupees, so RMSE and MAE are
-  real amounts rather than scaled numbers.
+- **No data leakage** — imputation, scaling, and one-hot encoding are all fit
+  inside each cross-validation fold via a scikit-learn `Pipeline`, never on the
+  full dataset.
+- **Handles messy data** — missing values are imputed, rare categories are
+  grouped, and outliers are clipped so the linear models stay stable across the
+  ~260 encoded columns.
+- **Skew-aware target** — `SalePrice` is right-skewed, so models train on its log
+  and predict back in dollars, keeping RMSE and MAE interpretable.
 - **Reproducible** — a fixed seed and a single `python main.py` regenerate every
   result, figure, and the saved model.
 
@@ -103,16 +107,16 @@ isn't there yet. It's deployed for free on Streamlit Community Cloud.
 ```
 house-price-predictor/
 ├── housing_price/            # the package
-│   ├── config.py             # paths, column groups, constants
+│   ├── config.py             # paths and constants
 │   ├── data.py               # loading & train/test splitting
-│   ├── features.py           # leak-free ColumnTransformer (scale + one-hot)
-│   ├── models.py             # six model pipelines
+│   ├── features.py           # leak-free ColumnTransformer (impute/scale/encode)
+│   ├── models.py             # four model pipelines
 │   ├── evaluate.py           # cross-validation & hold-out metrics
 │   ├── plots.py              # all visualisations
 │   ├── train.py              # fit the best model and save it
 │   └── pipeline.py           # end-to-end orchestration
 ├── data/
-│   ├── Housing.csv           # raw dataset
+│   ├── AmesHousing.csv       # raw dataset
 │   └── Model_Evaluation_Results.csv   # generated
 ├── reports/
 │   ├── figures/              # generated plots

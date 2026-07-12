@@ -14,7 +14,7 @@ def load_data(path=config.RAW_DATA):
 
 
 def split_features_target(df):
-    X = df[config.FEATURES].copy()
+    X = df.drop(columns=[config.TARGET, *config.DROP_COLS])
     y = df[config.TARGET].copy()
     return X, y
 

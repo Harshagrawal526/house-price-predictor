@@ -1,4 +1,4 @@
-"""Paths, column groups and constants used across the project."""
+"""Paths and constants used across the project."""
 
 from pathlib import Path
 
@@ -7,25 +7,17 @@ DATA_DIR = PROJECT_ROOT / "data"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
-RAW_DATA = DATA_DIR / "Housing.csv"
+RAW_DATA = DATA_DIR / "AmesHousing.csv"
 RESULTS_CSV = DATA_DIR / "Model_Evaluation_Results.csv"
 RESULTS_MD = REPORTS_DIR / "results.md"
 MODEL_PATH = PROJECT_ROOT / "models" / "housing_model.pkl"
 
-TARGET = "price"
+TARGET = "SalePrice"
+DROP_COLS = ["Id"]  # not predictive
+CURRENCY = "$"
 
-# numeric columns get scaled, categorical columns get one-hot encoded
-NUMERIC_FEATURES = ["area", "bedrooms", "bathrooms", "stories", "parking"]
-CATEGORICAL_FEATURES = [
-    "mainroad",
-    "guestroom",
-    "basement",
-    "hotwaterheating",
-    "airconditioning",
-    "prefarea",
-    "furnishingstatus",
-]
-FEATURES = NUMERIC_FEATURES + CATEGORICAL_FEATURES
+# feature columns are detected from dtypes at runtime (numeric vs categorical),
+# so the 79 Ames columns don't need to be listed by hand
 
 RANDOM_STATE = 42
 TEST_SIZE = 0.20

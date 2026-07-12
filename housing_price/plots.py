@@ -19,30 +19,32 @@ def _save(fig, name):
     return path
 
 
-def _rupees(x, _pos=None):
+def _money(x, _pos=None):
+    c = config.CURRENCY
     if abs(x) >= 1e6:
-        return f"₹{x / 1e6:.1f}M"
+        return f"{c}{x / 1e6:.1f}M"
     if abs(x) >= 1e3:
-        return f"₹{x / 1e3:.0f}K"
-    return f"₹{x:.0f}"
+        return f"{c}{x / 1e3:.0f}K"
+    return f"{c}{x:.0f}"
 
 
 def price_distribution(df):
     fig, ax = plt.subplots(figsize=(9, 5))
     sns.histplot(df[config.TARGET], kde=True, color="#4C72B0", ax=ax)
-    ax.set_title("Distribution of Housing Prices")
-    ax.set_xlabel("Price")
-    ax.xaxis.set_major_formatter(plt.FuncFormatter(_rupees))
+    ax.set_title("Distribution of Sale Prices")
+    ax.set_xlabel("Sale price")
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(_money))
     return _save(fig, "housing_price_distribution.png")
 
 
-def correlation_heatmap(df):
-    encoded = pd.get_dummies(df[config.FEATURES], drop_first=True)
-    encoded[config.TARGET] = df[config.TARGET].values
-    corr = encoded.corr(numeric_only=True)
-    fig, ax = plt.subplots(figsize=(12, 10))
+def correlation_heatmap(df, top_n=12):
+    # 79 features won't fit, so show the numeric columns most correlated with price
+    numeric = df.select_dtypes("number").drop(columns=config.DROP_COLS, errors="ignore")
+    top = numeric.corr()[config.TARGET].abs().sort_values(ascending=False).head(top_n).index
+    corr = numeric[top].corr()
+    fig, ax = plt.subplots(figsize=(11, 9))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0, ax=ax)
-    ax.set_title("Correlation Matrix")
+    ax.set_title(f"Top {top_n} Features Correlated with Sale Price")
     return _save(fig, "correlation_heatmap.png")
 
 
@@ -57,8 +59,8 @@ def model_comparison(results):
     order_rmse = results.sort_values("RMSE", ascending=False)
     ax2.barh(order_rmse["Model"], order_rmse["RMSE"], color="#C44E52")
     ax2.set_title("Cross-Validated RMSE  (lower is better)")
-    ax2.set_xlabel("RMSE (₹)")
-    ax2.xaxis.set_major_formatter(plt.FuncFormatter(_rupees))
+    ax2.set_xlabel("RMSE")
+    ax2.xaxis.set_major_formatter(plt.FuncFormatter(_money))
 
     fig.suptitle("Model Comparison", fontsize=14, fontweight="bold")
     fig.tight_layout()
@@ -73,8 +75,8 @@ def predicted_vs_actual(y_test, y_pred, model_name):
     ax.set_xlabel("Actual price")
     ax.set_ylabel("Predicted price")
     ax.set_title(f"Predicted vs Actual - {model_name}")
-    ax.xaxis.set_major_formatter(plt.FuncFormatter(_rupees))
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(_rupees))
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(_money))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(_money))
     ax.legend()
     return _save(fig, "predicted_vs_actual.png")
 
@@ -87,16 +89,18 @@ def residual_plot(y_test, y_pred, model_name):
     ax.set_xlabel("Predicted price")
     ax.set_ylabel("Residual (actual − predicted)")
     ax.set_title(f"Residual Plot - {model_name}")
-    ax.xaxis.set_major_formatter(plt.FuncFormatter(_rupees))
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(_rupees))
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(_money))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(_money))
     return _save(fig, "residual_plot.png")
 
 
 def feature_importance(model, model_name, top_n=15):
-    # handles both tree importances and linear coefficients
-    estimator = model.named_steps["model"]
+    # handles both tree importances and linear coefficients. The model is a
+    # TransformedTargetRegressor, so the fitted pipeline is under .regressor_
+    pipe = getattr(model, "regressor_", model)
+    estimator = pipe.named_steps["model"]
     try:
-        names = model.named_steps["preprocess"].get_feature_names_out()
+        names = pipe.named_steps["preprocess"].get_feature_names_out()
     except Exception:
         return None
 
@@ -109,7 +113,6 @@ def feature_importance(model, model_name, top_n=15):
     else:
         return None
 
-    # polynomial models change the feature count, so names won't line up
     if len(values) != len(names):
         return None
 
