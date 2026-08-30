@@ -10,7 +10,7 @@ reproducible, **leak-free** machine-learning pipeline.
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
-### ▶️ [Try the live demo](https://house-price-predictor-ha.streamlit.app/)
+### ▶️ [Try the live demo](https://pricewise-ha.streamlit.app/)
 
 An interactive Streamlit app takes a house's details and predicts its price.
 
@@ -94,7 +94,7 @@ figure.
 A [Streamlit](https://streamlit.io) app wraps the trained model: fill in a
 house's attributes and get an instant price estimate.
 
-**[▶️ Live app](https://house-price-predictor-ha.streamlit.app/)** — or run it locally:
+**[▶️ Live app](https://pricewise-ha.streamlit.app/)** — or run it locally:
 
 ```bash
 streamlit run app.py
