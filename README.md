@@ -1,10 +1,10 @@
-# 🏠 Housing Price Prediction
+# 🏠 PriceWise
 
 Predicting home sale prices from 79 property features, using a clean,
 reproducible, **leak-free** machine-learning pipeline.
 
 <p>
-  <img alt="CI" src="https://github.com/Harshagrawal526/house-price-predictor/actions/workflows/ci.yml/badge.svg">
+  <img alt="CI" src="https://github.com/Harshagrawal526/PriceWise/actions/workflows/ci.yml/badge.svg">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.9%2B-blue">
   <img alt="scikit-learn" src="https://img.shields.io/badge/scikit--learn-1.3%2B-orange">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
@@ -122,7 +122,7 @@ isn't there yet. It's deployed for free on Streamlit Community Cloud.
 ## Project structure
 
 ```
-house-price-predictor/
+PriceWise/
 ├── housing_price/            # the package
 │   ├── config.py             # paths and constants
 │   ├── data.py               # loading & train/test splitting
