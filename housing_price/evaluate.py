@@ -32,6 +32,24 @@ def cross_validate_models(models, X, y):
     return pd.DataFrame(rows).sort_values("R2", ascending=False).reset_index(drop=True)
 
 
+def select_best_model(cv_results):
+    """Choose a model without over-reading small differences in R2.
+
+    R2 moves around a lot between folds here, and the gap between the top
+    models is smaller than that fold-to-fold spread -- so picking whichever
+    row sorts highest is mostly picking noise. Instead, treat every model
+    within one standard error of the best R2 as tied, and break the tie on
+    MAE, which is in dollars and is what the app's estimate is judged on.
+
+    Returns the winning model's name and the tied set it was chosen from.
+    """
+    best = cv_results.iloc[0]
+    std_error = best["R2_std"] / np.sqrt(config.CV_FOLDS)
+    tied = cv_results[cv_results["R2"] >= best["R2"] - std_error]
+    winner = tied.sort_values("MAE").iloc[0]
+    return winner["Model"], tied
+
+
 def evaluate_on_test(model, X_train, y_train, X_test, y_test):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)

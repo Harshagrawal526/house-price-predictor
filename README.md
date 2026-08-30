@@ -23,8 +23,9 @@ describes 1,460 home sales in Ames, Iowa with **79 features** — lot size, livi
 area, quality ratings, year built, neighborhood, garage, basement, and dozens
 more, including real missing values. The goal is to predict the **sale price**.
 
-The project compares four regression models under identical, honest conditions
-and reports every error metric **in dollars** so the results are interpretable.
+The project compares four regression models under identical, honest conditions,
+reports every error metric **in dollars** so the results are interpretable, and
+refuses to pick a winner on a difference smaller than its own error bars.
 
 > **Dataset:** [House Prices: Advanced Regression Techniques (Kaggle / Ames, Iowa)](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)
 
@@ -53,19 +54,32 @@ Five-fold cross-validation across all candidate models:
 
 | Model | R² | RMSE ($) | MAE ($) |
 |-------|-----|----------|---------|
-| **Random Forest** ⭐ | **0.840** | 30,667 | 17,697 |
-| Lasso Regression | 0.835 | 29,214 | 14,819 |
-| Gradient Boosting | 0.832 | 30,284 | 16,341 |
-| Ridge Regression | 0.829 | 29,529 | 15,089 |
+| Random Forest | 0.840 ± 0.082 | 30,667 | 17,697 |
+| **Lasso Regression** ⭐ | 0.835 ± 0.156 | 29,214 | **14,819** |
+| Gradient Boosting | 0.832 ± 0.131 | 30,284 | 16,341 |
+| Ridge Regression | 0.829 ± 0.168 | 29,529 | 15,089 |
 
-On the held-out 20% test set, the best model (**Random Forest**) scores
-**R² = 0.89**, **RMSE ≈ $29K**, **MAE ≈ $17K**.
+On the held-out 20% test set, the selected model (**Lasso Regression**) scores
+**R² = 0.914**, **RMSE = $25,638**, **MAE = $15,407**.
 
-**Key finding:** the tree ensembles come out on top, but the tuned linear models
-are close behind (and actually have the lowest MAE) — the signal in this data is
-strong enough that model choice matters less than getting the preprocessing
-right. `OverallQual` and `GrLivArea` are consistently the most influential
-features.
+### Why Lasso, when Random Forest has the higher R²
+
+Because that R² gap is not real. Random Forest leads by **0.004**, while R²
+swings by **±0.082** between folds — the lead is about 5% of the noise it is
+measured against. Sorting the table and taking the top row would be ranking
+random variation, so all four models are treated as tied on R² and separated on
+**MAE** instead: it is denominated in dollars, and it is the error a price
+estimate is actually judged on. On that metric Lasso is **~$2,900 per house**
+better than Random Forest, a gap roughly twice its own fold-to-fold spread.
+
+The held-out set backs this up. Random Forest scored R² 0.890 / MAE ~$17K there;
+Lasso scores **0.914 / $15,407** — better on every metric, on data neither model
+had seen. Picking on the R² column alone would have shipped the worse model.
+
+**Key finding:** no model separates from the others on R² at this sample size,
+and the regularised linear models give the lowest dollar error despite never
+topping that column — the preprocessing matters more than the estimator.
+`OverallQual` and `GrLivArea` are consistently the most influential features.
 
 <p>
   <img src="reports/figures/model_evaluation_plot.png" width="49%">
@@ -99,6 +113,9 @@ isn't there yet. It's deployed for free on Streamlit Community Cloud.
   ~260 encoded columns.
 - **Skew-aware target** — `SalePrice` is right-skewed, so models train on its log
   and predict back in dollars, keeping RMSE and MAE interpretable.
+- **Selection that survives its own error bars** — models within one standard
+  error of the best R² are treated as tied and separated on MAE, so a lead
+  smaller than the fold-to-fold noise never decides which model ships.
 - **Reproducible** — a fixed seed and a single `python main.py` regenerate every
   result, figure, and the saved model.
 

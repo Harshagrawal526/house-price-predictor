@@ -14,15 +14,19 @@ Missing values are imputed and features scaled/one-hot encoded inside each CV fo
 | Gradient Boosting | 0.832 ± 0.131 | 30,284 | 16,341 |
 | Ridge Regression | 0.829 ± 0.168 | 29,529 | 15,089 |
 
-**Best model:** Random Forest
+### How the model was chosen
+
+The top 4 models sit within one standard error of the best R² (0.840 ± 0.082 across 5 folds), so their R² ranking is inside the fold-to-fold noise and does not identify a winner. They are treated as tied and separated on MAE instead -- it is denominated in dollars, and it is the error the app's estimate is actually judged on.
+
+**Selected model:** Lasso Regression (lowest MAE among the tied models, $14,819)
 
 ## Held-Out Test Performance
 
 Evaluated on the unseen 20% test split:
 
-- **R²:** 0.887
-- **RMSE:** $29,489
-- **MAE:** $17,355
+- **R²:** 0.914
+- **RMSE:** $25,638
+- **MAE:** $15,407
 
 ## Figures
 
@@ -35,6 +39,7 @@ Evaluated on the unseen 20% test split:
 
 ## Notes
 
-- With 79 features and real missing values, the tree ensembles pull ahead of the linear models here.
+- No model separates from the others on R². The spread between the best and worst is smaller than the spread across folds for any one of them, so the ranking is not meaningful at this sample size.
+- The regularised linear models give the lowest dollar error despite not topping the R² table -- on this data the preprocessing matters more than the choice of estimator.
 - Log-transforming the skewed target and imputing missing values are the two changes that matter most for accuracy.
 - `OverallQual` and `GrLivArea` are consistently the strongest predictors.

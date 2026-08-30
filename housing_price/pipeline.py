@@ -2,7 +2,7 @@ import joblib
 
 from . import config, plots
 from .data import load_data, split_features_target, train_test_data
-from .evaluate import cross_validate_models, evaluate_on_test
+from .evaluate import cross_validate_models, evaluate_on_test, select_best_model
 from .models import get_models
 
 
@@ -10,7 +10,7 @@ def _fmt_money(x):
     return f"{config.CURRENCY}{x:,.0f}"
 
 
-def _write_results(cv_results, best_name, test_metrics, n_samples, n_features):
+def _write_results(cv_results, best_name, tied, test_metrics, n_samples, n_features):
     config.RESULTS_CSV.parent.mkdir(parents=True, exist_ok=True)
     cv_results.to_csv(config.RESULTS_CSV, index=False)
 
@@ -39,7 +39,18 @@ def _write_results(cv_results, best_name, test_metrics, n_samples, n_features):
 
     lines += [
         "",
-        f"**Best model:** {best_name}",
+        "### How the model was chosen",
+        "",
+        f"The top {len(tied)} models sit within one standard error of the best "
+        f"R² ({cv_results.iloc[0]['R2']:.3f} ± {cv_results.iloc[0]['R2_std']:.3f} "
+        f"across {config.CV_FOLDS} folds), so their R² ranking is inside the "
+        "fold-to-fold noise and does not identify a winner. They are treated as "
+        "tied and separated on MAE instead -- it is denominated in dollars, and "
+        "it is the error the app's estimate is actually judged on.",
+        "",
+        f"**Selected model:** {best_name} "
+        f"(lowest MAE among the tied models, "
+        f"{_fmt_money(tied.sort_values('MAE').iloc[0]['MAE'])})",
         "",
         "## Held-Out Test Performance",
         "",
@@ -60,8 +71,12 @@ def _write_results(cv_results, best_name, test_metrics, n_samples, n_features):
         "",
         "## Notes",
         "",
-        "- With 79 features and real missing values, the tree ensembles pull "
-        "ahead of the linear models here.",
+        "- No model separates from the others on R². The spread between the "
+        "best and worst is smaller than the spread across folds for any one of "
+        "them, so the ranking is not meaningful at this sample size.",
+        "- The regularised linear models give the lowest dollar error despite "
+        "not topping the R² table -- on this data the preprocessing matters "
+        "more than the choice of estimator.",
         "- Log-transforming the skewed target and imputing missing values are the "
         "two changes that matter most for accuracy.",
         "- `OverallQual` and `GrLivArea` are consistently the strongest predictors.",
@@ -85,9 +100,14 @@ def run():
     cv_results = cross_validate_models(models, X, y)
     print(cv_results[["Model", "R2", "RMSE", "MAE"]].to_string(index=False))
 
-    best_name = cv_results.iloc[0]["Model"]
+    best_name, tied = select_best_model(cv_results)
     best_model = models[best_name]
-    print(f"\nBest model: {best_name}")
+    if len(tied) > 1:
+        print(
+            f"\n{len(tied)} models tie on R2 (within one standard error of "
+            f"{cv_results.iloc[0]['R2']:.3f}); choosing on MAE."
+        )
+    print(f"Selected model: {best_name}")
 
     X_train, X_test, y_train, y_test = train_test_data(df)
     test_metrics = evaluate_on_test(best_model, X_train, y_train, X_test, y_test)
@@ -102,7 +122,7 @@ def run():
     plots.residual_plot(y_test, test_metrics["y_pred"], best_name)
     plots.feature_importance(best_model, best_name)
 
-    _write_results(cv_results, best_name, test_metrics, len(df), X.shape[1])
+    _write_results(cv_results, best_name, tied, test_metrics, len(df), X.shape[1])
 
     # refit the winner on all the data and save it for the Streamlit app
     final_model = get_models()[best_name]
